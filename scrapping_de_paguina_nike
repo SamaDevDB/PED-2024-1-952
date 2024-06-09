@@ -64,4 +64,4 @@ def boot_en_nike(busqueda, cantidad):
     driver.quit()
 
 if __name__ == "__main__":
-    boot_en_nike("mujer", 
+    boot_en_nike("mujer", 5)
