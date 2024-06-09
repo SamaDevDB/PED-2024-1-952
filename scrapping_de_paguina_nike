@@ -1,0 +1,67 @@
+import pandas as pd
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.firefox.service import Service
+from webdriver_manager.firefox import GeckoDriverManager
+from bs4 import BeautifulSoup
+import time
+
+def boot_en_nike(busqueda, cantidad):
+    # Configurar el servicio de GeckoDriver
+    service = Service(GeckoDriverManager().install())
+
+    # Configurar opciones del navegador
+    options = webdriver.FirefoxOptions()
+    options.add_argument("--window-size=1000,1200")
+
+    # Crear instancia del navegador
+    driver = webdriver.Firefox(service=service, options=options)
+
+    # Abrir Amazon
+    driver.get("https://www.nike.com/mx/")
+
+    # Esperar 10 segundos
+    time.sleep(1)
+    carga1 = driver.find_element(By.ID, "VisualSearchInput")
+    time.sleep(1)
+    carga1.send_keys(busqueda)
+    time.sleep(1)
+    boton1 = driver.find_element(By.CLASS_NAME,"pre-search-btn" )
+    boton1.click()
+
+    # Esperar a que se carguen los resultados
+    time.sleep(1)
+
+    data = {"nombre": [],"tipo":[], "color":[], "precio":[]}
+
+    for repeticion in range(cantidad):
+        # Obtener el código fuente HTML de la página
+        html = driver.page_source
+
+        # Pasar el HTML a BeautifulSoup
+        soup = BeautifulSoup(html, "html.parser")
+
+        # Encontrar todos los elementos que contienen los productos
+        productos = soup.find_all('div', class_='product-card__title')
+        tipos= soup.findAll('div', class_='product-card__subtitle')
+        colores= soup.findAll('div', class_='product-card__count-wrapper')
+        precios= soup.findAll('div', class_='product-price__wrapper')
+        for producto, tipo, color, precio in zip(productos, tipos, colores, precios):
+            data["nombre"].append(producto.text)
+            data["tipo"].append(tipo.text)
+            data["color"].append(color.text)
+            data["precio"].append(precio.text)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(10)
+
+
+    # Imprimir los nombres de los productos
+    df = pd.DataFrame(data)
+    print(df)
+    df.to_csv("dataset/nike2.csv")
+
+    # Cerrar el navegador
+    driver.quit()
+
+if __name__ == "__main__":
+    boot_en_nike("mujer", 
